@@ -1,0 +1,88 @@
+import requests
+
+def isValidURL(URL): # Test if the URL is valid
+    if (URL.status_code) == 200:
+        print ("The URL works.")
+    else:
+        print ("The URL did not work.")
+
+def findDrugs(text, protein):
+  positionInText = 0
+  isDrugBankPresent = False
+  index = 0
+  x = True
+  
+  if "DrugBank;" in text: # First check if there are even any associated drugs
+    positionInText = text.index("DrugBank;") # The only time the position is at the first occurance of 'DrugBank' is when we first look thru. Afterwards, we will just update the position 
+    isDrugBankPresent = True
+    print ('Drugs Associated with ' + protein + ':')
+  else:
+    isDrugBankPresent = False
+    print("There are no drugs present.")
+    exit(1)
+
+  if isDrugBankPresent == True:
+    
+    drugArray = [] # Store the entire line in the drug array with the while loop
+    while x == True: 
+      drugArray.append(text[positionInText + index])
+      index += 1
+
+      if '.' in text[positionInText + index]: ## If the word has a period, it is the last word that will be added into the array
+        drugArray.append(text[positionInText + index]) # Make sure to include the word with a period
+
+        if "DrugBank;" not in drugArray: ## do not print the last array that does includes the info not about drugbank ID
+          break
+        
+        drugID = drugArray[1]
+        drugID = drugID.replace(";", "")
+        print(drugID)
+
+        # for i in range(1, len(drugArray)): # Do not print out "DrugBank;" everytime. Only print the code and the name
+        #   print (drugArray[i], end = ' ')
+        # print("") ## Print on next line since \n creates a space that is too large
+
+        drugArray.clear() # Clear drug array
+        positionInText = positionInText + index
+        index = 0 # Restart the index so the old value does not carry over
+        positionInText += 2 # Skip over 'DR'
+        if text[positionInText] != "DrugBank;":
+          x = False
+
+def findInteractiveProteins(text, protein):
+  positionInText = 0
+  isInteractionPresent = False
+  y = True
+
+  if "INTERACTION:" in text: # First check if there are even any associated proteins
+    positionInText = text.index("INTERACTION:") # The only time the position is at the first occurance of 'INTERACTION' is when we first look through. Afterwards, we will just update the position 
+    isInteractionPresent = True
+    positionInText += 3 
+    print ('Proteins Associated with ' + protein + ':')
+  else:
+    isInteractionPresent = False
+    print("There are no listed proteins that have interaction(s).")
+    exit(1)
+
+  if isInteractionPresent == True:
+    while y == True:
+      protein = text[positionInText]
+      protein = protein.replace(':', '') # Get rid of the ':' at the end of the protein
+      print(protein)
+      positionInText += 7 ## Text is always seperated by 7 string words
+      if text[positionInText - 1] != end_point_protein: 
+        y = False
+
+protein = input("Enter Uniprot Protein of Interest: ")
+end_point_protein = protein + ";"
+url = "http://purl.uniprot.org/uniprot/"+ protein+ ".txt?include=yes"
+url = url.replace(" ", "")
+response = requests.get(url) ## https://www.uniprot.org/help/api%5Fretrieve%5Fentries
+isValidURL(response)
+
+wholeText = " ".join(response.text.split()) ## Line is not necessary (makes txt file seperated by spaces)
+wordList = wholeText.split() ## Turn whole text into an array
+
+findDrugs(wordList, protein)
+print("\n")
+findInteractiveProteins(wordList, protein)
